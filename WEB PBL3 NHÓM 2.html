@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web PBL3 </title>
+    <style>
+        h1 {
+            font-size: 12px; /* Điều chỉnh kích thước chữ */
+            font-weight: bold; /* Làm nổi bật chữ */
+        }
+    </style>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #eb1717;
+                margin: 0;
+                padding: 0;
+                text-align: center;
+            }
+    
+            h1 {
+                background-color: #4000ff;
+                color: #f1f1f1;
+                padding: 5px;
+                margin: 0;
+            }
+    
+    
+            .sensor-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 25vh;
+            }
+    
+            .sensor-box {
+                background-color: #d5d3d2;
+                border: 1px solid #00f5d0;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                padding: 20px;
+                text-align: center;
+                margin: 20px;
+         
+            }
+            .sensor-box:hover {
+                box-shadow:none
+            }
+            strong {
+                font-weight: bold;
+            }
+    
+            span {
+                font-size: 30px; 
+                color: #007BFF;
+            }
+            body {
+                background-image: url('https://image.slidesdocs.com/responsive-images/background/geometric-funny-alphabet-education-colorful-cute-letters-powerpoint-background_ba877b436a__960_540.jpg');
+                background-size: cover;
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+                text-align: center;
+            }
+        </style>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+    <h1> BẬT/TẮT CẢNH BÁO</h1>
+    <div>
+        <button id="toggleButton">ấn nút</button>
+    </div>
+    <div class="sensor-container">
+        <div class="sensor-box">
+            <p><strong>Hồng ngoại:</strong></p>
+            <p><span id="irValue">0</span></p>
+        </div>
+        <div class="sensor-box">
+            <p><strong>Âm thanh:</strong></p>
+            <p><span id="soundValue">0</span></p>
+    </div>
+
+        <!-- Canvas for the chart -->
+        <div style="width: 900px; padding: 40px; margin: auto auto;">
+            <canvas id="sensorChart"></canvas>
+        </div>
+        <!-- Add Firebase SDK using ES modules -->
+
+    <script type="module">
+        // Import Firebase modules as needed
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-database.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCIKfBR07ejF-PBrijlbjdqCdUjy9N42jk",
+            authDomain: "pbl3-da653.firebaseapp.com",
+            databaseURL: "https://pbl3-da653-default-rtdb.firebaseio.com",
+            projectId: "pbl3-da653",
+            storageBucket: "pbl3-da653.appspot.com",
+            messagingSenderId: "613590800645",
+            appId: "1:613590800645:web:80a886746bbc903a05bf6c",
+            measurementId: "G-NHW94BCML2"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        
+
+        // Create a reference to the ButtonState in Firebase
+        const buttonStateRef = ref(database, 'ButtonState/value');
+        const irSensorRef = ref(database, 'IRSensor/value');
+        const soundSensorRef = ref(database, 'SoundSensor/value');
+
+        // Initialize the button state as 'false'
+        set(buttonStateRef, false);
+
+        // Initialize a variable to keep track of the current state
+        let buttonState = false;
+
+        const toggleButton = document.getElementById('toggleButton');
+
+        toggleButton.addEventListener('click', () => {
+            // Toggle the button state
+            buttonState = !buttonState;
+
+            // Update the ButtonState value on Firebase
+            set(buttonStateRef, buttonState);
+        });
+
+        // Listen for changes in the Firebase Realtime Database
+        onValue(buttonStateRef, (snapshot) => {
+            const firebaseButtonState = snapshot.val();
+
+            // Update the local button state based on Firebase
+            buttonState = firebaseButtonState;
+
+            // Update the button text based on the local button state
+            toggleButton.innerText = buttonState ? 'ON' : 'OFF';
+        });
+        onValue(irSensorRef, (snapshot) => {
+            const irValue = snapshot.val();
+            document.getElementById('irValue').textContent = `${irValue}`;
+            if (irValue < 1) {
+        // Display a notification on the webpage
+        const notification = document.createElement('div');
+        notification.textContent = 'PHÁT HIỆN CHUYỂN ĐỘNG CẢNH BÁO CÓ TRỘM';
+        // You can style the notification here
+        notification.style.backgroundColor = 'red';
+        notification.style.color = 'white';
+        notification.style.padding = '10px';
+        // Add the notification to the page
+        document.body.appendChild(notification);
+                // Set a timeout to remove the notification after 5 seconds
+                setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
+
+        });
+        onValue(soundSensorRef, (snapshot) => {
+            const soundValue = snapshot.val();
+            document.getElementById('soundValue').textContent = `${soundValue}`;
+            if (soundValue > 63) {
+        // Giá trị lớn hơn 63, hiển thị thông báo
+        showNotification(" Có Tiếng Động Lớn Cảnh báo có trộm !");
+    }
+});
+  // Rest of the code remains the same...
+  function showNotification(message) {
+    // Tạo và hiển thị một thông báo tùy chỉnh
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    
+    // Thêm thông báo vào phần tử gốc
+    document.body.appendChild(notification);
+    
+    // Ẩn thông báo sau một khoảng thời gian
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, 10000); // 10 giây
+        };
+
+        // Chart.js code
+        const irData = [];
+        const soundData = [];
+        const labels = [];
+
+        
+        const ctx = document.getElementById('sensorChart').getContext('2d');
+        const sensorChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'IR Sensor',
+                        data: irData,
+                        borderColor: 'rgb(255, 99, 132)',
+                        fill: false,
+                    },
+                    {
+                        label: 'Sound Sensor',
+                        data: soundData,
+                        borderColor: 'rgb(54, 162, 235)',
+                        fill: false,
+                    },
+                ],
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'second',
+                            parser: 'HH:mm:ss',
+                        },
+                        displayFormats: {
+                            second: 'HH:mm:ss'
+                        }
+                        
+                    },
+                    y: {
+                        beginAtZero: true,
+                    },
+                },
+            },
+        });
+
+        const irSensorRefChart = ref(database, 'IRSensor/value');
+        const soundSensorRefChart = ref(database, 'SoundSensor/value');
+
+        onValue(irSensorRefChart, (snapshot) => {
+            const irValue = snapshot.val();
+            irData.push(irValue);
+            labels.push(new Date().toLocaleTimeString());
+            sensorChart.update();
+        });
+
+        onValue(soundSensorRefChart, (snapshot) => {
+            const soundValue = snapshot.val();
+            soundData.push(soundValue);
+            sensorChart.update();
+        });
+
+    </script>
+</body>
+</html>
